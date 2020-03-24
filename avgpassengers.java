@@ -57,7 +57,7 @@ public class AvgPassengers {
 		count = count + 1;
 		}
 		result.set(sum / count);
-		context.write(new Text(key.toString()), result)
+		context.write(new Text(key.toString()), result);
     }
   }
 
