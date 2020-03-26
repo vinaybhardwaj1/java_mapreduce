@@ -22,21 +22,27 @@ public class AvgPassengers {
 
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
+	  if (key.get() == 0 && value.toString().contains("passenger_count"))
+                return;
+            else {
+                String data = value.toString();
+				String[] field = data.split(",", -1);
+				int passengers = 0;
+				Date pickupdate;
+				if (null != field && field.length == 18 && field[3].length() >0) {
+				passengers=Integer.parseInt(field[3]);
+				String dayofweek = "";
+				try{
+				pickupdate = new SimpleDateFormat("dd-MM-yyyy hh:mm").parse(field[1]);
+				dayofweek = new SimpleDateFormat("EEEE").format(pickupdate).toString();
+				}catch(Exception e){
+					System.out.println(e);
+				}
+				context.write(new Text(dayofweek), new IntWritable(passengers));
+            }
+		
 	  
-		String data = value.toString();
-		String[] field = data.split(",", -1);
-		double passengers = 0;
-		Date pickupdate;
-		if (null != field && field.length == 18 && field[3].length() >0) {
-		passengers=Double.parseDouble(field[3]);
-		String dayofweek = "";
-		try{
-		pickupdate = new SimpleDateFormat("dd-MM-yyyy hh:mm").parse(field[1]);
-		dayofweek = new SimpleDateFormat("EEEE").format(pickupdate).toString();
-		}catch(Exception e){
-			System.out.println(e);
-		}
-		context.write(new Text(dayofweek), passengers);
+      }
 	  
       }
     }
