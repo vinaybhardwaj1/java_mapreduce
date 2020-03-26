@@ -57,7 +57,7 @@ public static class IntSumReducer
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
     Job job = Job.getInstance(conf, "weekly passengers");
-    job.setJarByClass(AvgPassengers.class);
+    job.setJarByClass(AvgPassengersGeneral.class);
     job.setMapperClass(OneMapper.class);
     job.setCombinerClass(IntSumReducer.class);
     job.setReducerClass(IntSumReducer.class);
