@@ -18,24 +18,20 @@ public class AvgPassengersGeneral {
 
   public static class OneMapper
        extends Mapper<Object, Text, Text, IntWritable>{
-		   		private final static IntWritable one = new IntWritable(1);
+	private final static IntWritable one = new IntWritable(1);
 
 
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
 
 	  
-		if (key.get() == 0 && value.toString().contains("passenger_count"))
-                return;
-            else {
                 String data = value.toString();
-				String[] field = data.split(",", -1);
-				int passengers = 0;
-				if (null != field && field.length == 18 && field[3].length() >0) {
-				passengers=Integer.parseInt(field[3]);
-				context.write(new Text(one), new IntWritable(passengers));
-					}
-				}
+		String[] field = data.split(",", -1);
+		int passengers = 0;
+		if (null != field && field.length == 18 && field[3].length() >0) {
+		passengers=Integer.parseInt(field[3]);
+		context.write(new Text(one), new IntWritable(passengers));
+		}
     }
   }
 
