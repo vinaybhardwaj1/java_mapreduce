@@ -14,28 +14,39 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class AvgPassengersGeneral {
+public class AvgPassengersHourlyWeekend {
 
-  public static class OneMapper
+  public static class DatePaserMapper
        extends Mapper<Object, Text, Text, IntWritable>{
-		   		private final static IntWritable one = new IntWritable(1);
 
 
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
-
-	  
-		if (value.toString().contains("passenger_count"))// skipping header
+		
+		if (value.toString().contains("passenger_count")) // for skipping header
                 return;
             else {
                 String data = value.toString();
 				String[] field = data.split(",", -1);
 				int passengers = 0;
+				Date pickupdate;
 				if (null != field && field.length == 18 && field[3].length() >0) {
-				passengers=Integer.parseInt(field[3]); // picking passenger_count field
-				context.write(new Text(one), new IntWritable(passengers));
-					}
+				passengers=Integer.parseInt(field[3]); //picking passenger_count field
+				String dayofweek = "";
+				try{
+				pickupdate = new SimpleDateFormat("dd-MM-yyyy hh:mm").parse(field[1]);
+				dayofweek = new SimpleDateFormat("EEEE").format(pickupdate).toString(); // parsing date to day of week
+				hourofday = new SimpleDateFormat("H").format(pickupdate).toString(); //parsing date to hour of day
+				}catch(Exception e){
+					System.out.println(e);
 				}
+				if(dayofweek == "Saturday" || dayofweek == "Sunday" ){
+				context.write(new Text(hourofday), new IntWritable(passengers));
+				}
+            }
+		
+	  
+      }
     }
   }
 
@@ -61,8 +72,8 @@ public static class IntSumReducer
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
     Job job = Job.getInstance(conf, "weekly passengers");
-    job.setJarByClass(AvgPassengers.class);
-    job.setMapperClass(OneMapper.class);
+    job.setJarByClass(AvgPassengersHourlyWeekend.class);
+    job.setMapperClass(DatePaserMapper.class);
     job.setReducerClass(IntSumReducer.class);
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(IntWritable.class);

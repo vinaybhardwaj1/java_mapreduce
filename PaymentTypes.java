@@ -11,60 +11,54 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
+public class PaymentTypes {
 
-public class AvgPassengersGeneral {
+  public static class TokenizerMapper
+       extends Mapper<Object, Text, IntWritable, IntWritable>{
 
-  public static class OneMapper
-       extends Mapper<Object, Text, Text, IntWritable>{
-		   		private final static IntWritable one = new IntWritable(1);
-
+    private final static IntWritable one = new IntWritable(1);
 
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
-
 	  
-		if (value.toString().contains("passenger_count"))// skipping header
+	  if (value.toString().contains("passenger_count")) //skipping header
                 return;
             else {
                 String data = value.toString();
 				String[] field = data.split(",", -1);
-				int passengers = 0;
-				if (null != field && field.length == 18 && field[3].length() >0) {
-				passengers=Integer.parseInt(field[3]); // picking passenger_count field
-				context.write(new Text(one), new IntWritable(passengers));
+				int ptype = 0;
+				if (null != field && field.length == 18 && field[9].length() >0) {
+				ptype=Integer.parseInt(field[9]); // picking payment_type field
+				context.write(new IntWritable(ptype), one);
 					}
 				}
     }
   }
 
-public static class IntSumReducer
-       extends Reducer<Text,IntWritable,Text,IntWritable> {
+  public static class IntSumReducer
+       extends Reducer<IntWritable,IntWritable,IntWritable,IntWritable> {
     private IntWritable result = new IntWritable();
 
-    public void reduce(Text key, Iterable<IntWritable> values,
+    public void reduce(IntWritable key, Iterable<IntWritable> values,
                        Context context
                        ) throws IOException, InterruptedException {
-
-		int sum = 0;
-		int count = 0;
-		for (IntWritable val : values) {
-		sum = sum + val.get();
-		count = count + 1;
-		}
-		result.set(sum / count);
-		context.write(new Text(key.toString()), result);
+      int sum = 0;
+      for (IntWritable val : values) {
+        sum += val.get();
+      }
+      result.set(sum);
+      context.write(key, result);
     }
   }
 
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
-    Job job = Job.getInstance(conf, "weekly passengers");
-    job.setJarByClass(AvgPassengers.class);
-    job.setMapperClass(OneMapper.class);
+    Job job = Job.getInstance(conf, "word count");
+    job.setJarByClass(PaymentTypes.class);
+    job.setMapperClass(TokenizerMapper.class);
+    job.setCombinerClass(IntSumReducer.class);
     job.setReducerClass(IntSumReducer.class);
-    job.setOutputKeyClass(Text.class);
+    job.setOutputKeyClass(IntWritable.class);
     job.setOutputValueClass(IntWritable.class);
     FileInputFormat.addInputPath(job, new Path(args[0]));
     FileOutputFormat.setOutputPath(job, new Path(args[1]));
